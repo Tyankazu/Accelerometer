@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">"Accelerometer "</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="txt01">txt01</string>
+</resources>
