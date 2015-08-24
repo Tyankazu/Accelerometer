@@ -38,7 +38,7 @@ public class MainActivity extends ActionBarActivity
 
     private String path;
 
-    //センサマネージャ
+    //センサマネジャ
     private SensorManager mSensorManager;
     //private Sensor mAccelerometer;
     private float[] currentOrientationValues = {0.0f, 0.0f, 0.0f};
