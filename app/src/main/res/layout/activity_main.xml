@@ -26,6 +26,23 @@
             android:layout_height="wrap_content"
             android:id="@+id/AccZ"
             android:textSize="20dp" />
+
+        <TextView android:id="@+id/GyroX"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/GyroY"
+            android:textSize="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/GyroZ"
+            android:textSize="20dp" />
     </LinearLayout>
 
 </RelativeLayout>
