@@ -36,9 +36,13 @@ public class MainActivity extends ActionBarActivity
     private TextView AccY;
     private TextView AccZ;
 
+    private TextView GyroX;
+    private TextView GyroY;
+    private TextView GyroZ;
+
     private String path;
 
-    //センサマネージャ
+    //センサマネジャ
     private SensorManager mSensorManager;
     //private Sensor mAccelerometer;
     private float[] currentOrientationValues = {0.0f, 0.0f, 0.0f};
@@ -55,6 +59,10 @@ public class MainActivity extends ActionBarActivity
         AccX = (TextView) findViewById(R.id.AccX);
         AccY = (TextView) findViewById(R.id.AccY);
         AccZ = (TextView) findViewById(R.id.AccZ);
+
+        GyroX = (TextView) findViewById(R.id.GyroX);
+        GyroY = (TextView) findViewById(R.id.GyroY);
+        GyroZ = (TextView) findViewById(R.id.GyroZ);
 
 
         // センサーマネージャのインスタンスを取得
@@ -89,11 +97,18 @@ public class MainActivity extends ActionBarActivity
 
     public void onResume(){
         super.onResume();
+        //加速度
         List<Sensor>sensors = mSensorManager.getSensorList(Sensor.TYPE_LINEAR_ACCELERATION);
+        //ジャイロセンサ
+        List<Sensor>sensors2 = mSensorManager.getSensorList(Sensor.TYPE_GYROSCOPE);
         //リスナー登録
         for(Sensor s : sensors)
         {
             mSensorManager.registerListener(this, s,mSensorManager.SENSOR_DELAY_UI);
+        }
+        for(Sensor s2 : sensors2)
+        {
+            mSensorManager.registerListener(this, s2,mSensorManager.SENSOR_DELAY_UI);
         }
     }
 
@@ -114,12 +129,6 @@ public class MainActivity extends ActionBarActivity
                 + valueOf(minute)+":"+ valueOf(second)+":"+ valueOf(ms);
         System.out.println(nowtime);
 
-//        String data= "TIME,XACC,YACC,YACC\n";
-//        try{
-//            URLDecoder.decode(data, "UTF-16");
-//        }catch(UnsupportedEncodingException e1){
-//            e1.printStackTrace();
-//        }
 
 
         switch(e.sensor.getType())
@@ -128,7 +137,7 @@ public class MainActivity extends ActionBarActivity
             case Sensor.TYPE_LINEAR_ACCELERATION:
             {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_mm_ss");//時刻の出力フォーマット作成
-                String fileName = sdf.format(date)+".csv";
+                String fileName = sdf.format(date)+"acceleration"+".csv";
                 path = Environment.getExternalStorageDirectory()+"/"+ fileName;
                 // System.out.println(path);
                 File file = new File(path);
@@ -162,6 +171,52 @@ public class MainActivity extends ActionBarActivity
                 AccX.setText("x(redgrav):" +  e.values[mSensorManager.DATA_X]);
                 AccY.setText("y(redgrav):" +  e.values[mSensorManager.DATA_Y]);
                 AccZ.setText("z(redgrav):" +  e.values[mSensorManager.DATA_Z]);
+                //System.out.println(currentAccelerationValues[0]);
+                break;
+            }
+
+        }
+
+        switch(e.sensor.getType())
+        {
+            //ジャイロセンサ
+            case Sensor.TYPE_GYROSCOPE:
+            {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_mm_ss");//時刻の出力フォーマット作成
+                String fileName = sdf.format(date)+"gyroscope"+".csv";
+                path = Environment.getExternalStorageDirectory()+"/"+ fileName;
+                // System.out.println(path);
+                File file = new File(path);
+                file.getParentFile().mkdir();
+
+
+                String write_int =nowtime+","+
+                        e.values[mSensorManager.DATA_X]+","+
+                        e.values[mSensorManager.DATA_Y] +","+
+                        e.values[mSensorManager.DATA_Z]+"\n";
+                FileOutputStream fos;
+                try{
+                    fos = new FileOutputStream(file,true);
+                    OutputStreamWriter writer = new OutputStreamWriter(fos);
+                    bw = new BufferedWriter(writer);
+                    bw.write(write_int);
+                    bw.flush();
+                    bw.close();
+
+                    System.out.println("save2");
+                } catch (UnsupportedEncodingException k){
+                    k.printStackTrace();
+                } catch (FileNotFoundException k){
+                    String message = k.getMessage();
+                    k.printStackTrace();
+                } catch(IOException k){
+                    String message = k.getMessage();
+                    k.printStackTrace();
+                }
+
+                GyroX.setText("x(gyro):" +  e.values[mSensorManager.DATA_X]);
+                GyroY.setText("y(gyro):" +  e.values[mSensorManager.DATA_Y]);
+                GyroZ.setText("z(gyro):" +  e.values[mSensorManager.DATA_Z]);
                 //System.out.println(currentAccelerationValues[0]);
                 break;
             }
