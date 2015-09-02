@@ -43,6 +43,18 @@
             android:layout_height="wrap_content"
             android:id="@+id/GyroZ"
             android:textSize="20dp" />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="START"
+            android:id="@+id/start" />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="STOP"
+            android:id="@+id/stop" />
     </LinearLayout>
 
 </RelativeLayout>
