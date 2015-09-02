@@ -82,6 +82,7 @@ public class MainActivity extends ActionBarActivity
             //クリック時に呼ばれるメソッド
             @Override
             public void onClick(View v) {
+                Toast.makeText(getApplicationContext(), "計測開始", Toast.LENGTH_SHORT ).show();
                 System.out.println("startclick");
                 count++;
                 System.out.println("start:"+count);
@@ -94,6 +95,7 @@ public class MainActivity extends ActionBarActivity
             //クリック時に呼ばれるメソッド
             @Override
             public void onClick(View v) {
+                Toast.makeText(getApplicationContext(), "計測終了", Toast.LENGTH_SHORT ).show();
                 System.out.println("stopclick");
                 count++;
                 try {
