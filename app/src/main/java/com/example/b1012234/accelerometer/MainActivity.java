@@ -11,7 +11,10 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -41,6 +44,10 @@ public class MainActivity extends ActionBarActivity
     private TextView GyroZ;
 
     private String path;
+    private SimpleDateFormat sdf;
+
+    //ボタンの判定
+    private int count = 0;
 
     //センサマネジャ
     private SensorManager mSensorManager;
@@ -50,6 +57,7 @@ public class MainActivity extends ActionBarActivity
 
     BufferedWriter bw;
     Date date;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,11 +72,47 @@ public class MainActivity extends ActionBarActivity
         GyroY = (TextView) findViewById(R.id.GyroY);
         GyroZ = (TextView) findViewById(R.id.GyroZ);
 
+        // クリックイベントを取得したいボタン
+        Button Start_bt = (Button) findViewById(R.id.start);
+        Button Stop_bt = (Button) findViewById(R.id.stop);
+
+        // クリックリスナーを登録
+        Start_bt.setOnClickListener(new View.OnClickListener() {
+
+            //クリック時に呼ばれるメソッド
+            @Override
+            public void onClick(View v) {
+                System.out.println("startclick");
+                count++;
+                System.out.println("start:"+count);
+                sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");//時刻の出力フォーマット作成
+
+            }
+        });
+        Stop_bt.setOnClickListener(new View.OnClickListener() {
+
+            //クリック時に呼ばれるメソッド
+            @Override
+            public void onClick(View v) {
+                System.out.println("stopclick");
+                count++;
+                try {
+                    bw.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("stop:"+count);
+
+
+            }
+        });
+
 
         // センサーマネージャのインスタンスを取得
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
         date = new Date();//現在時刻の取得
+
 
 
     }
@@ -104,11 +148,11 @@ public class MainActivity extends ActionBarActivity
         //リスナー登録
         for(Sensor s : sensors)
         {
-            mSensorManager.registerListener(this, s,mSensorManager.SENSOR_DELAY_UI);
+            mSensorManager.registerListener(this, s,10000);
         }
         for(Sensor s2 : sensors2)
         {
-            mSensorManager.registerListener(this, s2,mSensorManager.SENSOR_DELAY_UI);
+            mSensorManager.registerListener(this, s2,10000);
         }
     }
 
@@ -136,44 +180,48 @@ public class MainActivity extends ActionBarActivity
             //加速度
             case Sensor.TYPE_LINEAR_ACCELERATION:
             {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_mm_ss");//時刻の出力フォーマット作成
-                String fileName = sdf.format(date)+"acceleration"+".csv";
-                path = Environment.getExternalStorageDirectory()+"/"+ fileName;
-                // System.out.println(path);
-                File file = new File(path);
-                file.getParentFile().mkdir();
+                if(count%2!= 0) {
+                    String fileName = sdf.format(date) + "acceleration" + ".csv";
+                    path = Environment.getExternalStorageDirectory() + "/" + fileName;
+                    // System.out.println(path);
+                    File file = new File(path);
+                    file.getParentFile().mkdir();
 
 
-                String write_int =nowtime+","+
-                        e.values[mSensorManager.DATA_X]+","+
-                        e.values[mSensorManager.DATA_Y] +","+
-                        e.values[mSensorManager.DATA_Z]+"\n";
-                FileOutputStream fos;
-                try{
-                    fos = new FileOutputStream(file,true);
-                    OutputStreamWriter writer = new OutputStreamWriter(fos);
-                    bw = new BufferedWriter(writer);
-                    bw.write(write_int);
-                    bw.flush();
-                    bw.close();
+                    String write_int = nowtime + "," +
+                            e.values[mSensorManager.DATA_X] + "," +
+                            e.values[mSensorManager.DATA_Y] + "," +
+                            e.values[mSensorManager.DATA_Z] + "\n";
+                    FileOutputStream fos;
+                    try {
+                        fos = new FileOutputStream(file, true);
+                        OutputStreamWriter writer = new OutputStreamWriter(fos);
+                        bw = new BufferedWriter(writer);
+                        bw.write(write_int);
+                        bw.flush();
 
-                    System.out.println("save");
-                } catch (UnsupportedEncodingException k){
-                    k.printStackTrace();
-                } catch (FileNotFoundException k){
-                    String message = k.getMessage();
-                    k.printStackTrace();
-                } catch(IOException k){
-                    String message = k.getMessage();
-                    k.printStackTrace();
+
+                        System.out.println("save");
+                    } catch (UnsupportedEncodingException k) {
+                        k.printStackTrace();
+                    } catch (FileNotFoundException k) {
+                        String message = k.getMessage();
+                        k.printStackTrace();
+                    } catch (IOException k) {
+                        String message = k.getMessage();
+                        k.printStackTrace();
+                    }
                 }
 
                 AccX.setText("x(redgrav):" +  e.values[mSensorManager.DATA_X]);
                 AccY.setText("y(redgrav):" +  e.values[mSensorManager.DATA_Y]);
                 AccZ.setText("z(redgrav):" +  e.values[mSensorManager.DATA_Z]);
+
+
                 //System.out.println(currentAccelerationValues[0]);
                 break;
             }
+
 
         }
 
@@ -182,36 +230,37 @@ public class MainActivity extends ActionBarActivity
             //ジャイロセンサ
             case Sensor.TYPE_GYROSCOPE:
             {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_mm_ss");//時刻の出力フォーマット作成
-                String fileName = sdf.format(date)+"gyroscope"+".csv";
-                path = Environment.getExternalStorageDirectory()+"/"+ fileName;
-                // System.out.println(path);
-                File file = new File(path);
-                file.getParentFile().mkdir();
+                if(count%2!= 0) {
+                    String fileName = sdf.format(date) + "gyroscope" + ".csv";
+                    path = Environment.getExternalStorageDirectory() + "/" + fileName;
+                    // System.out.println(path);
+                    File file = new File(path);
+                    file.getParentFile().mkdir();
 
 
-                String write_int =nowtime+","+
-                        e.values[mSensorManager.DATA_X]+","+
-                        e.values[mSensorManager.DATA_Y] +","+
-                        e.values[mSensorManager.DATA_Z]+"\n";
-                FileOutputStream fos;
-                try{
-                    fos = new FileOutputStream(file,true);
-                    OutputStreamWriter writer = new OutputStreamWriter(fos);
-                    bw = new BufferedWriter(writer);
-                    bw.write(write_int);
-                    bw.flush();
-                    bw.close();
+                    String write_int = nowtime + "," +
+                            e.values[mSensorManager.DATA_X] + "," +
+                            e.values[mSensorManager.DATA_Y] + "," +
+                            e.values[mSensorManager.DATA_Z] + "\n";
+                    FileOutputStream fos;
+                    try {
+                        fos = new FileOutputStream(file, true);
+                        OutputStreamWriter writer = new OutputStreamWriter(fos);
+                        bw = new BufferedWriter(writer);
+                        bw.write(write_int);
+                        bw.flush();
 
-                    System.out.println("save2");
-                } catch (UnsupportedEncodingException k){
-                    k.printStackTrace();
-                } catch (FileNotFoundException k){
-                    String message = k.getMessage();
-                    k.printStackTrace();
-                } catch(IOException k){
-                    String message = k.getMessage();
-                    k.printStackTrace();
+
+                        System.out.println("save2");
+                    } catch (UnsupportedEncodingException k) {
+                        k.printStackTrace();
+                    } catch (FileNotFoundException k) {
+                        String message = k.getMessage();
+                        k.printStackTrace();
+                    } catch (IOException k) {
+                        String message = k.getMessage();
+                        k.printStackTrace();
+                    }
                 }
 
                 GyroX.setText("x(gyro):" +  e.values[mSensorManager.DATA_X]);
@@ -220,6 +269,7 @@ public class MainActivity extends ActionBarActivity
                 //System.out.println(currentAccelerationValues[0]);
                 break;
             }
+
 
         }
     }
