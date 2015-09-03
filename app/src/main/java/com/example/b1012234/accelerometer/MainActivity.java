@@ -35,13 +35,32 @@ import static java.lang.String.*;
 public class MainActivity extends ActionBarActivity
                   implements SensorEventListener {
 
+    //加速度測定
     private TextView AccX;
     private TextView AccY;
     private TextView AccZ;
 
+    //角速度測定
     private TextView GyroX;
     private TextView GyroY;
     private TextView GyroZ;
+
+    //傾き
+    private TextView azimuth;
+    private TextView pitch;
+    private TextView roll;
+
+    //回転行列
+    private static final int MATRIX_SIZE = 16;
+    float[] inR = new float[MATRIX_SIZE];
+    float[] outR = new float[MATRIX_SIZE];
+    float[] I = new float[MATRIX_SIZE];
+
+    //傾きセンサの値
+    float[] orValues = new float[3];
+    float[] mgValues = new float[3];
+    float[] acValues = new float[3];
+
 
     private String path;
     private SimpleDateFormat sdf;
@@ -51,9 +70,9 @@ public class MainActivity extends ActionBarActivity
 
     //センサマネジャ
     private SensorManager mSensorManager;
-    //private Sensor mAccelerometer;
-    private float[] currentOrientationValues = {0.0f, 0.0f, 0.0f};
-    private float[] currentAccelerationValues = {0.0f, 0.0f, 0.0f};
+    private Sensor mMagField;
+    private Sensor mAccerometer;
+
 
     BufferedWriter bw;
     Date date;
@@ -72,6 +91,10 @@ public class MainActivity extends ActionBarActivity
         GyroY = (TextView) findViewById(R.id.GyroY);
         GyroZ = (TextView) findViewById(R.id.GyroZ);
 
+        azimuth = (TextView) findViewById(R.id.azimuth);
+        pitch = (TextView) findViewById(R.id.pitch);
+        roll = (TextView) findViewById(R.id.roll);
+
         // クリックイベントを取得したいボタン
         Button Start_bt = (Button) findViewById(R.id.start);
         Button Stop_bt = (Button) findViewById(R.id.stop);
@@ -82,12 +105,11 @@ public class MainActivity extends ActionBarActivity
             //クリック時に呼ばれるメソッド
             @Override
             public void onClick(View v) {
-                Toast.makeText(getApplicationContext(), "計測開始", Toast.LENGTH_SHORT ).show();
+                Toast.makeText(getApplicationContext(), "計測開始", Toast.LENGTH_SHORT).show();
                 System.out.println("startclick");
                 count++;
-                System.out.println("start:"+count);
+                System.out.println("start:" + count);
                 sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");//時刻の出力フォーマット作成
-
             }
         });
         Stop_bt.setOnClickListener(new View.OnClickListener() {
@@ -95,7 +117,7 @@ public class MainActivity extends ActionBarActivity
             //クリック時に呼ばれるメソッド
             @Override
             public void onClick(View v) {
-                Toast.makeText(getApplicationContext(), "計測終了", Toast.LENGTH_SHORT ).show();
+                Toast.makeText(getApplicationContext(), "計測終了", Toast.LENGTH_SHORT).show();
                 System.out.println("stopclick");
                 count++;
                 try {
@@ -103,19 +125,19 @@ public class MainActivity extends ActionBarActivity
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.println("stop:"+count);
-
-
+                System.out.println("stop:" + count);
             }
         });
 
 
         // センサーマネージャのインスタンスを取得
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mAccerometer =
+                mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mMagField =
+                mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
         date = new Date();//現在時刻の取得
-
-
 
     }
 
@@ -141,26 +163,33 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-    public void onResume(){
+    public void onResume() {
         super.onResume();
-        //加速度
-        List<Sensor>sensors = mSensorManager.getSensorList(Sensor.TYPE_LINEAR_ACCELERATION);
+        //加速度(重力加速度を含まない)
+        List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_LINEAR_ACCELERATION);
+        //加速度(重力加速度を含む)
+        List<Sensor> sensors4 = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
         //ジャイロセンサ
-        List<Sensor>sensors2 = mSensorManager.getSensorList(Sensor.TYPE_GYROSCOPE);
-        //リスナー登録
-        for(Sensor s : sensors)
-        {
-            mSensorManager.registerListener(this, s,10000);
+        List<Sensor> sensors2 = mSensorManager.getSensorList(Sensor.TYPE_GYROSCOPE);
+        //磁気センサ
+        List<Sensor> sensors3 = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
+        //リスナー登録(100Hzはアプリが止まる)
+        for (Sensor s : sensors) {
+            mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_UI);
         }
-        for(Sensor s2 : sensors2)
-        {
-            mSensorManager.registerListener(this, s2,10000);
+        for (Sensor s2 : sensors2) {
+            mSensorManager.registerListener(this, s2, SensorManager.SENSOR_DELAY_UI);
+        }
+        for (Sensor s3 : sensors3) {
+            mSensorManager.registerListener(this, s3, SensorManager.SENSOR_DELAY_UI);
+        }
+        for (Sensor s4 : sensors4) {
+            mSensorManager.registerListener(this, s4,SensorManager.SENSOR_DELAY_UI);
         }
     }
 
     @Override
-    public void onSensorChanged(SensorEvent e)
-    {
+    public void onSensorChanged(SensorEvent e) {
         Calendar time = Calendar.getInstance();
         int year = time.get(time.YEAR);
         int month = time.get(time.MONTH);
@@ -170,25 +199,78 @@ public class MainActivity extends ActionBarActivity
         int second = time.get(time.SECOND);
         int ms = time.get(time.MILLISECOND);
 
-
-        String nowtime = valueOf(year)+"/"+ valueOf(month+1)+"/"+ valueOf(day)+"_"+valueOf(hour)+":"
-                + valueOf(minute)+":"+ valueOf(second)+":"+ valueOf(ms);
+        String nowtime = valueOf(year) + "/" +
+                valueOf(month + 1) + "/" + valueOf(day) + "_" + valueOf(hour) + ":"
+                + valueOf(minute) + ":" + valueOf(second) + ":" + valueOf(ms);
         System.out.println(nowtime);
 
+        switch (e.sensor.getType()) {
+            case Sensor.TYPE_ACCELEROMETER:
+                acValues = e.values.clone();
+                System.out.println("GRAVITYx:" + acValues[0]);
+                System.out.println("GRAVITYy:" + acValues[1]);
+                System.out.println("GRAVITYz:" + acValues[2]);
+                break;
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                mgValues = e.values.clone();
+                System.out.println("MAGx:" + mgValues[0]);
+                System.out.println("MAGy:" + mgValues[1]);
+                System.out.println("MAGz:" + mgValues[2]);
+                break;
+        }
 
+            if (mgValues != null && acValues != null) {
+                //地磁気センサと加速度センサの値から、回転行列inR, Iを作成
+                SensorManager.getRotationMatrix(inR, I, acValues, mgValues);
+                //内部状態inRを元に、システムに合った座標軸系へ行列変換（outR）
+                SensorManager.remapCoordinateSystem(inR,
+                        SensorManager.AXIS_X, SensorManager.AXIS_Y, outR);
+                //メソッドでは傾き情報として、Z軸方向の方位、Ｘ軸方向のpitch、Y軸方向のrollを得る
+                SensorManager.getOrientation(outR, orValues);
 
-        switch(e.sensor.getType())
-        {
+                if (count % 2 != 0) {
+                String fileName = sdf.format(date) + "Orientation" + ".csv";
+                path = Environment.getExternalStorageDirectory() + "/" + fileName;
+
+                File file = new File(path);
+                file.getParentFile().mkdir();
+
+                String write_int = nowtime + "," +
+                        rad2Deg(orValues[0]) + "," +
+                        rad2Deg(orValues[1]) + "," +
+                        rad2Deg(orValues[2]) + "\n";
+                FileOutputStream fos;
+                try {
+                    fos = new FileOutputStream(file, true);
+                    OutputStreamWriter writer = new OutputStreamWriter(fos);
+                    bw = new BufferedWriter(writer);
+                    bw.write(write_int);
+                    bw.flush();
+
+                    System.out.println("save3");
+                } catch (UnsupportedEncodingException k) {
+                    k.printStackTrace();
+                } catch (FileNotFoundException k) {
+                    String message = k.getMessage();
+                    k.printStackTrace();
+                } catch (IOException k) {
+                    String message = k.getMessage();
+                    k.printStackTrace();
+                }
+            }
+                azimuth.setText("方位角:" + rad2Deg(orValues[0]));
+                pitch.setText("傾斜角:" + rad2Deg(orValues[1]));
+                roll.setText("回転角:" + rad2Deg(orValues[2]));
+        }
+
+        switch (e.sensor.getType()) {
             //加速度
-            case Sensor.TYPE_LINEAR_ACCELERATION:
-            {
-                if(count%2!= 0) {
+            case Sensor.TYPE_LINEAR_ACCELERATION: {
+                if (count % 2 != 0) {
                     String fileName = sdf.format(date) + "acceleration" + ".csv";
                     path = Environment.getExternalStorageDirectory() + "/" + fileName;
-                    // System.out.println(path);
                     File file = new File(path);
                     file.getParentFile().mkdir();
-
 
                     String write_int = nowtime + "," +
                             e.values[mSensorManager.DATA_X] + "," +
@@ -201,7 +283,6 @@ public class MainActivity extends ActionBarActivity
                         bw = new BufferedWriter(writer);
                         bw.write(write_int);
                         bw.flush();
-
 
                         System.out.println("save");
                     } catch (UnsupportedEncodingException k) {
@@ -215,65 +296,57 @@ public class MainActivity extends ActionBarActivity
                     }
                 }
 
-                AccX.setText("x(redgrav):" +  e.values[mSensorManager.DATA_X]);
-                AccY.setText("y(redgrav):" +  e.values[mSensorManager.DATA_Y]);
-                AccZ.setText("z(redgrav):" +  e.values[mSensorManager.DATA_Z]);
+            AccX.setText("x軸加速度:" + e.values[mSensorManager.DATA_X]);
+            AccY.setText("y軸加速度:" + e.values[mSensorManager.DATA_Y]);
+            AccZ.setText("z軸加速度:" + e.values[mSensorManager.DATA_Z]);
 
-
-                //System.out.println(currentAccelerationValues[0]);
-                break;
-            }
-
-
+            break;
         }
+    }
 
-        switch(e.sensor.getType())
-        {
-            //ジャイロセンサ
-            case Sensor.TYPE_GYROSCOPE:
-            {
-                if(count%2!= 0) {
-                    String fileName = sdf.format(date) + "gyroscope" + ".csv";
-                    path = Environment.getExternalStorageDirectory() + "/" + fileName;
-                    // System.out.println(path);
-                    File file = new File(path);
-                    file.getParentFile().mkdir();
+    switch(e.sensor.getType())
+    {
+        //ジャイロセンサ
+        case Sensor.TYPE_GYROSCOPE: {
+            if (count % 2 != 0) {
+                String fileName = sdf.format(date) + "gyroscope" + ".csv";
+                path = Environment.getExternalStorageDirectory() + "/" + fileName;
+                File file = new File(path);
+                file.getParentFile().mkdir();
 
+                String write_int = nowtime + "," +
+                        e.values[mSensorManager.DATA_X] + "," +
+                        e.values[mSensorManager.DATA_Y] + "," +
+                        e.values[mSensorManager.DATA_Z] + "\n";
+                FileOutputStream fos;
+                try {
+                    fos = new FileOutputStream(file, true);
+                    OutputStreamWriter writer = new OutputStreamWriter(fos);
+                    bw = new BufferedWriter(writer);
+                    bw.write(write_int);
+                    bw.flush();
 
-                    String write_int = nowtime + "," +
-                            e.values[mSensorManager.DATA_X] + "," +
-                            e.values[mSensorManager.DATA_Y] + "," +
-                            e.values[mSensorManager.DATA_Z] + "\n";
-                    FileOutputStream fos;
-                    try {
-                        fos = new FileOutputStream(file, true);
-                        OutputStreamWriter writer = new OutputStreamWriter(fos);
-                        bw = new BufferedWriter(writer);
-                        bw.write(write_int);
-                        bw.flush();
-
-
-                        System.out.println("save2");
-                    } catch (UnsupportedEncodingException k) {
-                        k.printStackTrace();
-                    } catch (FileNotFoundException k) {
-                        String message = k.getMessage();
-                        k.printStackTrace();
-                    } catch (IOException k) {
-                        String message = k.getMessage();
-                        k.printStackTrace();
-                    }
+                    System.out.println("save2");
+                } catch (UnsupportedEncodingException k) {
+                    k.printStackTrace();
+                } catch (FileNotFoundException k) {
+                    String message = k.getMessage();
+                    k.printStackTrace();
+                } catch (IOException k) {
+                    String message = k.getMessage();
+                    k.printStackTrace();
                 }
-
-                GyroX.setText("x(gyro):" +  e.values[mSensorManager.DATA_X]);
-                GyroY.setText("y(gyro):" +  e.values[mSensorManager.DATA_Y]);
-                GyroZ.setText("z(gyro):" +  e.values[mSensorManager.DATA_Z]);
-                //System.out.println(currentAccelerationValues[0]);
-                break;
             }
-
-
+            GyroX.setText("x軸角速度:" + e.values[mSensorManager.DATA_X]);
+            GyroY.setText("y軸角速度:" + e.values[mSensorManager.DATA_Y]);
+            GyroZ.setText("z軸角速度:" + e.values[mSensorManager.DATA_Z]);
+            break;
         }
+    }
+    }
+
+    private int rad2Deg(float rad){
+        return (int) Math.floor(Math.toDegrees(rad));
     }
 
     @Override
@@ -286,8 +359,6 @@ public class MainActivity extends ActionBarActivity
         super.onStop();
         //Listnerの登録解除
         mSensorManager.unregisterListener(this);
-
-
     }
 }
 
