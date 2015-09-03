@@ -44,6 +44,23 @@
             android:id="@+id/GyroZ"
             android:textSize="20dp" />
 
+        <TextView android:id="@+id/azimuth"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/pitch"
+            android:textSize="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/roll"
+            android:textSize="20dp" />
+
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
