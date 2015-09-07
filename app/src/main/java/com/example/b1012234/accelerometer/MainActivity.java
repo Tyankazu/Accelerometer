@@ -6,6 +6,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -61,6 +63,10 @@ public class MainActivity extends ActionBarActivity
     float[] mgValues = new float[3];
     float[] acValues = new float[3];
 
+    //SoundPool(効果音再生)
+    private SoundPool mSoundPool;
+    private int[] mSoundId = new int[2];//使う効果音の数だけ配列作成
+
 
     private String path;
     private SimpleDateFormat sdf;
@@ -105,6 +111,7 @@ public class MainActivity extends ActionBarActivity
             //クリック時に呼ばれるメソッド
             @Override
             public void onClick(View v) {
+                mSoundPool.play(mSoundId[0], 1.0F, 1.0F, 0, 0, 1.0F);
                 Toast.makeText(getApplicationContext(), "計測開始", Toast.LENGTH_SHORT).show();
                 System.out.println("startclick");
                 count++;
@@ -117,6 +124,7 @@ public class MainActivity extends ActionBarActivity
             //クリック時に呼ばれるメソッド
             @Override
             public void onClick(View v) {
+                mSoundPool.play(mSoundId[1], 1.0F, 1.0F, 0, 0, 1.0F);
                 Toast.makeText(getApplicationContext(), "計測終了", Toast.LENGTH_SHORT).show();
                 System.out.println("stopclick");
                 count++;
@@ -186,6 +194,12 @@ public class MainActivity extends ActionBarActivity
         for (Sensor s4 : sensors4) {
             mSensorManager.registerListener(this, s4,SensorManager.SENSOR_DELAY_UI);
         }
+
+        //効果音を使えるように読み込み
+        mSoundPool = new SoundPool(3, AudioManager.STREAM_MUSIC,0);
+        mSoundId[0] = mSoundPool.load(getApplicationContext(),R.raw.start,1);
+        mSoundId[1] = mSoundPool.load(getApplicationContext(),R.raw.stop,1);
+
     }
 
     @Override
@@ -359,6 +373,11 @@ public class MainActivity extends ActionBarActivity
         super.onStop();
         //Listnerの登録解除
         mSensorManager.unregisterListener(this);
+        //SoundPool 解放
+        mSoundPool.unload(mSoundId[0]);
+        mSoundPool.unload(mSoundId[1]);
+
+        mSoundPool.release();
     }
 }
 
