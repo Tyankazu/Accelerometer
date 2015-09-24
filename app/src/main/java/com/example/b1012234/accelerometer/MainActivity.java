@@ -183,10 +183,10 @@ public class MainActivity extends ActionBarActivity
         List<Sensor> sensors3 = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
         //リスナー登録(100Hzはアプリが止まる)
         for (Sensor s : sensors) {
-            mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_UI);
+            mSensorManager.registerListener(this, s, 20000);
         }
         for (Sensor s2 : sensors2) {
-            mSensorManager.registerListener(this, s2, SensorManager.SENSOR_DELAY_UI);
+            mSensorManager.registerListener(this, s2,20000);
         }
         for (Sensor s3 : sensors3) {
             mSensorManager.registerListener(this, s3, SensorManager.SENSOR_DELAY_UI);
@@ -368,15 +368,19 @@ public class MainActivity extends ActionBarActivity
 
     }
 
+    protected void onPause()
+    {
+        //Listnerの登録解除
+        mSensorManager.unregisterListener(this);
+        super.onPause();
+    }
+
     protected void onStop()
     {
         super.onStop();
-        //Listnerの登録解除
-        mSensorManager.unregisterListener(this);
         //SoundPool 解放
         mSoundPool.unload(mSoundId[0]);
         mSoundPool.unload(mSoundId[1]);
-
         mSoundPool.release();
     }
 }
