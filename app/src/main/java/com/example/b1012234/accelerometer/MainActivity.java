@@ -176,11 +176,11 @@ public class MainActivity extends ActionBarActivity
         //加速度(重力加速度を含まない)
         List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_LINEAR_ACCELERATION);
         //加速度(重力加速度を含む)
-        List<Sensor> sensors4 = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
+        //List<Sensor> sensors4 = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
         //ジャイロセンサ
         List<Sensor> sensors2 = mSensorManager.getSensorList(Sensor.TYPE_GYROSCOPE);
         //磁気センサ
-        List<Sensor> sensors3 = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
+       // List<Sensor> sensors3 = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
         //リスナー登録(100Hzはアプリが止まる)
         for (Sensor s : sensors) {
             mSensorManager.registerListener(this, s, 20000);
@@ -188,12 +188,12 @@ public class MainActivity extends ActionBarActivity
         for (Sensor s2 : sensors2) {
             mSensorManager.registerListener(this, s2,20000);
         }
-        for (Sensor s3 : sensors3) {
-            mSensorManager.registerListener(this, s3, SensorManager.SENSOR_DELAY_UI);
-        }
-        for (Sensor s4 : sensors4) {
-            mSensorManager.registerListener(this, s4,SensorManager.SENSOR_DELAY_UI);
-        }
+//        for (Sensor s3 : sensors3) {
+//            mSensorManager.registerListener(this, s3, SensorManager.SENSOR_DELAY_UI);
+//        }
+//        for (Sensor s4 : sensors4) {
+//            mSensorManager.registerListener(this, s4,SensorManager.SENSOR_DELAY_UI);
+//        }
 
         //効果音を使えるように読み込み
         mSoundPool = new SoundPool(3, AudioManager.STREAM_MUSIC,0);
@@ -218,64 +218,66 @@ public class MainActivity extends ActionBarActivity
                 + valueOf(minute) + ":" + valueOf(second) + ":" + valueOf(ms);
         System.out.println(nowtime);
 
-        switch (e.sensor.getType()) {
-            case Sensor.TYPE_ACCELEROMETER:
-                acValues = e.values.clone();
-                System.out.println("GRAVITYx:" + acValues[0]);
-                System.out.println("GRAVITYy:" + acValues[1]);
-                System.out.println("GRAVITYz:" + acValues[2]);
-                break;
-            case Sensor.TYPE_MAGNETIC_FIELD:
-                mgValues = e.values.clone();
-                System.out.println("MAGx:" + mgValues[0]);
-                System.out.println("MAGy:" + mgValues[1]);
-                System.out.println("MAGz:" + mgValues[2]);
-                break;
-        }
-
-            if (mgValues != null && acValues != null) {
-                //地磁気センサと加速度センサの値から、回転行列inR, Iを作成
-                SensorManager.getRotationMatrix(inR, I, acValues, mgValues);
-                //内部状態inRを元に、システムに合った座標軸系へ行列変換（outR）
-                SensorManager.remapCoordinateSystem(inR,
-                        SensorManager.AXIS_X, SensorManager.AXIS_Y, outR);
-                //メソッドでは傾き情報として、Z軸方向の方位、Ｘ軸方向のpitch、Y軸方向のrollを得る
-                SensorManager.getOrientation(outR, orValues);
-
-                if (count % 2 != 0) {
-                String fileName = sdf.format(date) + "Orientation" + ".csv";
-                path = Environment.getExternalStorageDirectory() + "/" + fileName;
-
-                File file = new File(path);
-                file.getParentFile().mkdir();
-
-                String write_int = nowtime + "," +
-                        rad2Deg(orValues[0]) + "," +
-                        rad2Deg(orValues[1]) + "," +
-                        rad2Deg(orValues[2]) + "\n";
-                FileOutputStream fos;
-                try {
-                    fos = new FileOutputStream(file, true);
-                    OutputStreamWriter writer = new OutputStreamWriter(fos);
-                    bw = new BufferedWriter(writer);
-                    bw.write(write_int);
-                    bw.flush();
-
-                    System.out.println("save3");
-                } catch (UnsupportedEncodingException k) {
-                    k.printStackTrace();
-                } catch (FileNotFoundException k) {
-                    String message = k.getMessage();
-                    k.printStackTrace();
-                } catch (IOException k) {
-                    String message = k.getMessage();
-                    k.printStackTrace();
-                }
-            }
-                azimuth.setText("方位角:" + rad2Deg(orValues[0]));
-                pitch.setText("傾斜角:" + rad2Deg(orValues[1]));
-                roll.setText("回転角:" + rad2Deg(orValues[2]));
-        }
+//        switch (e.sensor.getType()) {
+//            case Sensor.TYPE_ACCELEROMETER:
+//                acValues = e.values.clone();
+//                System.out.println("GRAVITYx:" + acValues[0]);
+//                System.out.println("GRAVITYy:" + acValues[1]);
+//                System.out.println("GRAVITYz:" + acValues[2]);
+//                break;
+//            case Sensor.TYPE_MAGNETIC_FIELD:
+//                mgValues = e.values.clone();
+//                System.out.println("MAGx:" + mgValues[0]);
+//                System.out.println("MAGy:" + mgValues[1]);
+//                System.out.println("MAGz:" + mgValues[2]);
+//                break;
+//        }
+//
+//            if (mgValues != null && acValues != null) {
+//                //地磁気センサと加速度センサの値から、回転行列inR, Iを作成
+//                SensorManager.getRotationMatrix(inR, I, acValues, mgValues);
+//                //内部状態inRを元に、システムに合った座標軸系へ行列変換（outR）
+//                SensorManager.remapCoordinateSystem(inR,
+//                        SensorManager.AXIS_X, SensorManager.AXIS_Y, outR);
+//                //メソッドでは傾き情報として、Z軸方向の方位、Ｘ軸方向のpitch、Y軸方向のrollを得る
+//                SensorManager.getOrientation(outR, orValues);
+//
+//
+//
+//                if (count % 2 != 0) {
+//                String fileName = sdf.format(date) + "Orientation" + ".csv";
+//                path = Environment.getExternalStorageDirectory() + "/" + fileName;
+//
+//                File file = new File(path);
+//                file.getParentFile().mkdir();
+//
+//                String write_int = nowtime + "," +
+//                        rad2Deg(orValues[0]) + "," +
+//                        rad2Deg(orValues[1]) + "," +
+//                        rad2Deg(orValues[2]) + "\n";
+//                FileOutputStream fos;
+//                try {
+//                    fos = new FileOutputStream(file, true);
+//                    OutputStreamWriter writer = new OutputStreamWriter(fos);
+//                    bw = new BufferedWriter(writer);
+//                    bw.write(write_int);
+//                    bw.flush();
+//
+//                    System.out.println("save3");
+//                } catch (UnsupportedEncodingException k) {
+//                    k.printStackTrace();
+//                } catch (FileNotFoundException k) {
+//                    String message = k.getMessage();
+//                    k.printStackTrace();
+//                } catch (IOException k) {
+//                    String message = k.getMessage();
+//                    k.printStackTrace();
+//                }
+//            }
+//                azimuth.setText("方位角:" + rad2Deg(orValues[0]));
+//                pitch.setText("傾斜角:" + rad2Deg(orValues[1]));
+//                roll.setText("回転角:" + rad2Deg(orValues[2]));
+//        }
 
         switch (e.sensor.getType()) {
             //加速度
