@@ -473,13 +473,13 @@ public class MainActivity extends ActionBarActivity
         }
         //緯度の表示更新
         TextView lat_value = (TextView)findViewById(R.id.latitude);
-        lat_value.setText("latitude:"+Double.toString(location.getLatitude()));
+        lat_value.setText("Latitude:"+Double.toString(location.getLatitude()));
         //経度の表示更新
         TextView lon_value = (TextView)findViewById(R.id.longitude);
-        lon_value.setText("longitude:"+Double.toString(location.getLongitude()));
+        lon_value.setText("Longitude:"+Double.toString(location.getLongitude()));
         //スピードの表示更新
         TextView spd_value = (TextView)findViewById(R.id.speed);
-        spd_value.setText("speed(m/s):" + ChangeMStoKMH(location.getSpeed()));
+        spd_value.setText("Speed(km/h):" + ChangeMStoKMH(location.getSpeed()));
     }
 
     private float ChangeMStoKMH(float sp){
