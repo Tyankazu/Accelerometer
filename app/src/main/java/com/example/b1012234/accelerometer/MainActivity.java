@@ -6,11 +6,16 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,7 +30,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -35,7 +39,7 @@ import static java.lang.String.*;
 
 
 public class MainActivity extends ActionBarActivity
-                  implements SensorEventListener {
+                  implements SensorEventListener,LocationListener {
 
     //加速度測定
     private TextView AccX;
@@ -47,10 +51,10 @@ public class MainActivity extends ActionBarActivity
     private TextView GyroY;
     private TextView GyroZ;
 
-    //傾き
-    private TextView azimuth;
-    private TextView pitch;
-    private TextView roll;
+    //緯度・経度・スピード
+    private TextView latitude;
+    private TextView longitude;
+    private TextView speed;
 
     //回転行列
     private static final int MATRIX_SIZE = 16;
@@ -62,6 +66,11 @@ public class MainActivity extends ActionBarActivity
     float[] orValues = new float[3];
     float[] mgValues = new float[3];
     float[] acValues = new float[3];
+
+    //GPS
+    LocationManager mLocationManager = null;
+    private static final String LOG_TAG ="Location";
+
 
     //SoundPool(効果音再生)
     private SoundPool mSoundPool;
@@ -97,9 +106,9 @@ public class MainActivity extends ActionBarActivity
         GyroY = (TextView) findViewById(R.id.GyroY);
         GyroZ = (TextView) findViewById(R.id.GyroZ);
 
-        azimuth = (TextView) findViewById(R.id.azimuth);
-        pitch = (TextView) findViewById(R.id.pitch);
-        roll = (TextView) findViewById(R.id.roll);
+        latitude = (TextView) findViewById(R.id.latitude);
+        longitude = (TextView) findViewById(R.id.longitude);
+        speed = (TextView) findViewById(R.id.speed);
 
         // クリックイベントを取得したいボタン
         Button Start_bt = (Button) findViewById(R.id.start);
@@ -144,6 +153,7 @@ public class MainActivity extends ActionBarActivity
                 mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mMagField =
                 mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        mLocationManager =(LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
 
         date = new Date();//現在時刻の取得
 
@@ -173,6 +183,13 @@ public class MainActivity extends ActionBarActivity
 
     public void onResume() {
         super.onResume();
+        //GPS
+        Location lastLocation = mLocationManager.getLastKnownLocation
+                (LocationManager.GPS_PROVIDER);
+        updateDisplayedInfo(lastLocation);
+        //位置情報更新要求(リスナの登録)
+        mLocationManager.requestLocationUpdates
+                (LocationManager.GPS_PROVIDER, 0, 0, this);
         //加速度(重力加速度を含まない)
         List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_LINEAR_ACCELERATION);
         //加速度(重力加速度を含む)
@@ -216,7 +233,9 @@ public class MainActivity extends ActionBarActivity
         String nowtime = valueOf(year) + "/" +
                 valueOf(month + 1) + "/" + valueOf(day) + "_" + valueOf(hour) + ":"
                 + valueOf(minute) + ":" + valueOf(second) + ":" + valueOf(ms);
-        System.out.println(nowtime);
+       // System.out.println(nowtime);
+
+
 
 //        switch (e.sensor.getType()) {
 //            case Sensor.TYPE_ACCELEROMETER:
@@ -280,6 +299,11 @@ public class MainActivity extends ActionBarActivity
 //        }
 
         switch (e.sensor.getType()) {
+            case Sensor.TYPE_PROXIMITY: {
+                System.out.println("PROXIMITY:");
+               // AccX.setText("近接センサ:" + e.values[0]);
+                break;
+            }
             //加速度
             case Sensor.TYPE_LINEAR_ACCELERATION: {
                 if (count % 2 != 0) {
@@ -312,7 +336,7 @@ public class MainActivity extends ActionBarActivity
                     }
                 }
 
-            AccX.setText("x軸加速度:" + e.values[mSensorManager.DATA_X]);
+           AccX.setText("x軸加速度:" + e.values[mSensorManager.DATA_X]);
             AccY.setText("y軸加速度:" + e.values[mSensorManager.DATA_Y]);
             AccZ.setText("z軸加速度:" + e.values[mSensorManager.DATA_Z]);
 
@@ -374,6 +398,7 @@ public class MainActivity extends ActionBarActivity
     {
         //Listnerの登録解除
         mSensorManager.unregisterListener(this);
+        mLocationManager.removeUpdates(this);
         super.onPause();
     }
 
@@ -384,6 +409,99 @@ public class MainActivity extends ActionBarActivity
         mSoundPool.unload(mSoundId[0]);
         mSoundPool.unload(mSoundId[1]);
         mSoundPool.release();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.d(LOG_TAG, "onLocationChanged has been called.");
+        //緯度、経度、標高の更新
+        updateDisplayedInfo(location);
+        Log.v("----------", "----------");
+        Log.v("Latitude", String.valueOf(location.getLatitude()));
+        Log.v("Longitude", String.valueOf(location.getLongitude()));
+        Log.v("Speed", String.valueOf(location.getSpeed()));
+
+        Calendar time = Calendar.getInstance();
+        int year = time.get(time.YEAR);
+        int month = time.get(time.MONTH);
+        int day = time.get(time.DAY_OF_MONTH);
+        int hour = time.get(time.HOUR_OF_DAY);
+        int minute = time.get(time.MINUTE);
+        int second = time.get(time.SECOND);
+        int ms = time.get(time.MILLISECOND);
+
+        String nowtime = valueOf(year) + "/" +
+                valueOf(month + 1) + "/" + valueOf(day) + "_" + valueOf(hour) + ":"
+                + valueOf(minute) + ":" + valueOf(second) + ":" + valueOf(ms);
+        System.out.println(nowtime);
+
+        if (count % 2 != 0) {
+            String fileName = sdf.format(date) + "gps" + ".csv";
+            path = Environment.getExternalStorageDirectory() + "/" + fileName;
+            File file = new File(path);
+            file.getParentFile().mkdir();
+
+            String write_int = nowtime + "," +
+                    String.valueOf(location.getLatitude()) + "," +
+                    String.valueOf(location.getLongitude()) + "," +
+                    String.valueOf(ChangeMStoKMH(location.getSpeed())) + "\n";
+            FileOutputStream fos;
+            try {
+                fos = new FileOutputStream(file, true);
+                OutputStreamWriter writer = new OutputStreamWriter(fos);
+                bw = new BufferedWriter(writer);
+                bw.write(write_int);
+                bw.flush();
+
+                System.out.println("save3");
+            } catch (UnsupportedEncodingException k) {
+                k.printStackTrace();
+            } catch (FileNotFoundException k) {
+                String message = k.getMessage();
+                k.printStackTrace();
+            } catch (IOException k) {
+                String message = k.getMessage();
+                k.printStackTrace();
+            }
+        }
+
+    }
+    public void updateDisplayedInfo(Location location){
+        if (location == null){
+            Log.e(LOG_TAG, "location is null.");
+            return;
+        }
+        //緯度の表示更新
+        TextView lat_value = (TextView)findViewById(R.id.latitude);
+        lat_value.setText("latitude:"+Double.toString(location.getLatitude()));
+        //経度の表示更新
+        TextView lon_value = (TextView)findViewById(R.id.longitude);
+        lon_value.setText("longitude:"+Double.toString(location.getLongitude()));
+        //スピードの表示更新
+        TextView spd_value = (TextView)findViewById(R.id.speed);
+        spd_value.setText("speed(m/s):" + ChangeMStoKMH(location.getSpeed()));
+    }
+
+    private float ChangeMStoKMH(float sp){
+        float kmh;
+        kmh = sp * 3600 / 1000;
+
+        return kmh;
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
     }
 }
 

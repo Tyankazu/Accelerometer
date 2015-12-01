@@ -8,7 +8,8 @@
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:weightSum="1">
 
         <TextView android:id="@+id/AccX"
             android:layout_width="wrap_content"
@@ -44,7 +45,7 @@
             android:id="@+id/GyroZ"
             android:textSize="20dp" />
 
-        <TextView android:id="@+id/azimuth"
+        <TextView android:id="@+id/latitude"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="20dp" />
@@ -52,26 +53,28 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/pitch"
+            android:id="@+id/longitude"
             android:textSize="20dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/roll"
+            android:id="@+id/speed"
             android:textSize="20dp" />
 
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="START"
-            android:id="@+id/start" />
+            android:id="@+id/start"
+            android:layout_marginTop="90dp" />
 
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="STOP"
             android:id="@+id/stop" />
+
     </LinearLayout>
 
 </RelativeLayout>
